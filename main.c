@@ -37,7 +37,7 @@ int main(void)
   // init internal digitally controlled oscillator
   BCSCTL1 = CALBC1_1MHZ;
   DCOCTL  = CALDCO_1MHZ;
-  // IO setup (launchpad : bit 0 -> green led, bit 6 -> green led)
+  // IO setup (launchpad : bit 0 -> red led, bit 6 -> green led)
   P1DIR   = BIT0 | BIT6;
   P1OUT   = BIT0 | BIT6;
   // UART init

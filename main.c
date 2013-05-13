@@ -6,23 +6,34 @@
   MSP430G2553 at 1 MHz
 */
 
-#include <msp430.h>
+#include <msp430g2553.h>
+#include <legacymsp430.h>
+#include <stdio.h>
 #include "uart.h"
+
+// some prototypes
+unsigned long millis(void);
+
+// some vars
+unsigned long _millis = 0;
 
 // ISR called when a char is receive
 void uart_rx_isr(unsigned char c) 
 {
-  // echo char
-  uart_putc(c);
+  // echo millis current value
+  printf("millis()=%lu\n\r", millis());
   // toggle red led
   P1OUT ^= BIT0;
 }
  
-// main
+/*
+ * main routines
+ */
 int main(void)
 {
-  // stop watchdog
-  WDTCTL  = WDTPW | WDTHOLD;
+  // set watchdog timer interval to 32ms, enable interrupt
+  WDTCTL  = WDT_MDLY_32;
+  IE1    |= WDTIE;
   // init internal digitally controlled oscillator
   BCSCTL1 = CALBC1_1MHZ;
   DCOCTL  = CALDCO_1MHZ;
@@ -35,17 +46,33 @@ int main(void)
   // register ISR called when data was received
   uart_set_rx_isr_ptr(uart_rx_isr);
 
+  // enable global interrupt flag
   __bis_SR_register(GIE);
 
-  uart_puts((char *)"Test\n\r");
-
-  unsigned char c = uart_getc();
-
-  uart_putc(c);
-  uart_puts((char *)"\n\rOK\n\r");
+  printf("start\n\r");
 
   // go to lowpower mode 0 with interrupt enable
   __bis_SR_register(LPM0_bits | GIE);
 
   return 0;
+}
+
+/*
+ * Watchdog (in timer mode) interrupt routine
+ * use to emulate Arduino millis()
+ */
+interrupt(WDT_VECTOR) wd_timer_isr(void) {
+  _millis += 32;
+}
+
+/*
+ * Safe millis access
+ *
+ */
+unsigned long millis(void) {
+  unsigned long safe_millis;
+  __disable_interrupt();
+  safe_millis = _millis;
+  __enable_interrupt();
+  return safe_millis;
 }

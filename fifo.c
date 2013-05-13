@@ -26,6 +26,17 @@ Share, it's happiness !
 #include "fifo.h"
 
 /**
+ * Init FIFO struct.
+ *
+ */
+void fifo_init(fifo *_fifo)
+{
+  _fifo->size  = 0;
+  _fifo->raddr = 0;
+  _fifo->waddr = 0;
+}
+
+/**
  * Read one character from FIFO.
  *
  * @return	current character or EOF if FIFO empty
@@ -36,12 +47,13 @@ int fifo_getchar(fifo *_fifo)
   // stop interrupt
   __bic_SR_register(GIE);
   // check fifo level
-  if (_fifo->raddr == _fifo->waddr)
+  if (_fifo->size == 0)
     // empty fifo: return EOF
     c = EOF;
   else {
     // read current value
     c = _fifo->data[_fifo->raddr];
+    _fifo->size--;
     // set read pointer
     if (_fifo->raddr < (FIFO_BUFFER_SIZE - 1)) {
       _fifo->raddr++;
@@ -61,14 +73,17 @@ int fifo_getchar(fifo *_fifo)
  */
 int fifo_putchar(fifo *_fifo, int c)
 {
-  // check fifo level
-  if (fifo_size(_fifo) >= FIFO_BUFFER_SIZE) 
-    // fifo is full: return EOF
-    return EOF;
   // stop interrupt
   __bic_SR_register(GIE);
+  // check fifo level
+  if (_fifo->size >= FIFO_BUFFER_SIZE) {
+    // start interrupt
+    __bis_SR_register(GIE);
+    return EOF;
+  }
   // write current value
   _fifo->data[_fifo->waddr] = c;
+  _fifo->size++;
   // set write pointer
   if (_fifo->waddr < (FIFO_BUFFER_SIZE - 1)) 
     _fifo->waddr++;
@@ -80,20 +95,17 @@ int fifo_putchar(fifo *_fifo, int c)
 }
 
 /**
- * Read size of the FIFO.
+ * Safe access to size of the FIFO.
  *
  * @return	number of byte in FIFO
  */
 unsigned char fifo_size(fifo *_fifo)
 {
-  char size;
+  unsigned char size;
   // stop interrupt
   __bic_SR_register(GIE);
-  size = (_fifo->waddr - _fifo->raddr);
+  size = _fifo->size;
   // start interrupt
   __bis_SR_register(GIE);
-  // check rollover
-  if (size < 0)
-    size += FIFO_BUFFER_SIZE;
   return size;
 }

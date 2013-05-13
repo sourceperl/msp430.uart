@@ -5,16 +5,12 @@
 #include "uart.h"
 #include "fifo.h"
 
-// Rx = P1.1 and Tx = P1.2
-#define RXD BIT1
-#define TXD BIT2
-
 // prototype : callback handler for receive
 void (*uart_rx_isr_ptr)(unsigned char c);
 
 // uart tx/rx FIFO
-fifo tx = {.raddr = 0, .waddr = 0};
-fifo rx = {.raddr = 0, .waddr = 0};
+fifo tx;
+fifo rx;
 
 // define putchar for link stdio with the UART
 int putchar(int c)
@@ -26,10 +22,14 @@ int putchar(int c)
 // init hardware uart
 void uart_init(void)
 {
+  // init FIFO
+  fifo_init(&tx);
+  fifo_init(&rx);
+  // init ISR ptr
   uart_set_rx_isr_ptr(0L);
-  // set some register
-  P1SEL     = RXD | TXD;                       
-  P1SEL2    = RXD | TXD;
+  // Rx = P1.1 and Tx = P1.2
+  P1SEL     = BIT1 | BIT2;                       
+  P1SEL2    = BIT1 | BIT2;
   // select SMCLK                 
   UCA0CTL1 |= UCSSEL_2;
   // baudrate 9600 (SMCLK = 1 MHz)
@@ -41,20 +41,6 @@ void uart_init(void)
   UCA0CTL1 &= ~UCSWRST;
   // Enable USCI_A0 RX interrupt
   IE2      |= UCA0RXIE;
-  /*** 
-    debug 
-  ***/
-  int i;
-  uart_puts((char *)"start UART driver\n\r");
-  // add data to FIFO for test
-  for (i = 0; i < 32; i++)
-    fifo_putchar(&rx, 'T');
-  fifo_getchar(&rx);
-  // print FIFO size
-  int _rx_size = fifo_size(&rx);
-  int _tx_size = fifo_size(&tx);
-  printf ("_rx_size %d\n\r", _rx_size);
-  printf ("_tx_size %d\n\r", _tx_size);
 }
 
 void uart_set_rx_isr_ptr(void (*isr_ptr)(unsigned char c)) 

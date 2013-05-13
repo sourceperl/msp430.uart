@@ -7,11 +7,13 @@
 typedef struct 
 {
   volatile unsigned char data[FIFO_BUFFER_SIZE];
+  volatile unsigned char size;
   volatile unsigned char raddr;
   volatile unsigned char waddr;
 } fifo;
 
 // FIFO access routines
+void fifo_init(fifo *_fifo);
 int fifo_getchar(fifo *_fifo); 
 int fifo_putchar(fifo *_fifo, int c);
 unsigned char fifo_size(fifo *_fifo);

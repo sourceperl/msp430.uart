@@ -44,8 +44,7 @@ void fifo_init(fifo *_fifo)
 int fifo_getchar(fifo *_fifo)
 {
   unsigned char c;
-  // stop interrupt
-  __bic_SR_register(GIE);
+  __disable_interrupt();
   // check fifo level
   if (_fifo->size == 0)
     // empty fifo: return EOF
@@ -61,8 +60,7 @@ int fifo_getchar(fifo *_fifo)
       _fifo->raddr = 0;
     }
   }
-  // start interrupt
-  __bis_SR_register(GIE);
+  __enable_interrupt();
   return c;
 }
 
@@ -73,12 +71,10 @@ int fifo_getchar(fifo *_fifo)
  */
 int fifo_putchar(fifo *_fifo, int c)
 {
-  // stop interrupt
-  __bic_SR_register(GIE);
+  __disable_interrupt();
   // check fifo level
   if (_fifo->size >= FIFO_BUFFER_SIZE) {
-    // start interrupt
-    __bis_SR_register(GIE);
+    __enable_interrupt();
     return EOF;
   }
   // write current value
@@ -89,8 +85,7 @@ int fifo_putchar(fifo *_fifo, int c)
     _fifo->waddr++;
   else  
     _fifo->waddr = 0;
-  // start interrupt
-  __bis_SR_register(GIE);
+  __enable_interrupt();
   return 0;
 }
 
@@ -102,10 +97,8 @@ int fifo_putchar(fifo *_fifo, int c)
 unsigned char fifo_size(fifo *_fifo)
 {
   unsigned char size;
-  // stop interrupt
-  __bic_SR_register(GIE);
+  __disable_interrupt();
   size = _fifo->size;
-  // start interrupt
-  __bis_SR_register(GIE);
+  __enable_interrupt();
   return size;
 }

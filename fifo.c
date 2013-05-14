@@ -46,10 +46,10 @@ int fifo_getchar(fifo *_fifo)
   unsigned char c;
   __disable_interrupt();
   // check fifo level
-  if (_fifo->size == 0)
+  if (_fifo->size == 0) {
     // empty fifo: return EOF
     c = EOF;
-  else {
+  } else {
     // read current value
     c = _fifo->data[_fifo->raddr];
     _fifo->size--;

@@ -1,12 +1,9 @@
-#include <msp430.h>
+#include <msp430g2553.h>
 #include <legacymsp430.h>
 #include <stdio.h>
 
 #include "uart.h"
 #include "fifo.h"
-
-// prototype : callback handler for receive
-void (*uart_rx_isr_ptr)(unsigned char c);
 
 // uart tx/rx FIFO
 fifo tx;
@@ -25,8 +22,6 @@ void uart_init(void)
   // init FIFO
   fifo_init(&tx);
   fifo_init(&rx);
-  // init ISR ptr
-  uart_set_rx_isr_ptr(0L);
   // Rx = P1.1 and Tx = P1.2
   P1SEL     = BIT1 | BIT2;                       
   P1SEL2    = BIT1 | BIT2;
@@ -39,13 +34,8 @@ void uart_init(void)
   UCA0MCTL  = UCBRS0;
   // Initialize USCI state machine
   UCA0CTL1 &= ~UCSWRST;
-  // Enable USCI_A0 RX interrupt
-  IE2      |= UCA0RXIE;
-}
-
-void uart_set_rx_isr_ptr(void (*isr_ptr)(unsigned char c)) 
-{
-  uart_rx_isr_ptr = isr_ptr;	
+  // Enable USCI_A0 Rx interrupt
+  IE2      |= UCA0RXIE; 
 }
 
 unsigned char uart_getc()
@@ -57,9 +47,12 @@ unsigned char uart_getc()
 
 void uart_putc(unsigned char c)
 {
+  // add char in fifo
+  fifo_putchar(&tx, c);
+  IE2      |= UCA0TXIE;
   // buzy wait until Tx buffer empty
-  while (!(IFG2 & UCA0TXIFG));
-  UCA0TXBUF = c;
+  //while (!(IFG2 & UCA0TXIFG));
+  //UCA0TXBUF = c;
 }
 
 void uart_puts(const char *str)
@@ -67,10 +60,41 @@ void uart_puts(const char *str)
   while(*str) uart_putc(*str++);
 }
 
-// interrupt service routine : Rx char call handler if set
+// interrupt service routine : Rx UART/I2C
 interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
 {
-  if(uart_rx_isr_ptr != 0L) {
-    (uart_rx_isr_ptr)(UCA0RXBUF);
+  P1OUT ^= BIT0;
+  // USCI A0 UART interrupt
+  if (UC0IFG & UCA0RXIFG) {
+    char c;
+    if (UCA0RXBUF == '\r') {
+      // parse code
+      printf("cmd ");
+      while ((c = fifo_getchar(&rx)) != EOF) 
+        printf("%c", c);
+      printf("\n\r");
+    } else {
+      // store char in FIFO
+      fifo_putchar(&rx, UCA0RXBUF);
+    }
   }
+  // USCI BO I2C interrupt (not in use here)
+}
+
+// interrupt service routine : Tx UART/I2C
+interrupt(USCIAB0TX_VECTOR) USCI0TX_ISR(void)
+{  
+  P1OUT ^= BIT6;
+  __disable_interrupt();
+  if (IFG2 & UCA0TXIFG) {
+    UCA0TXBUF = tx.data[a];
+    if (a < 31) {
+      a++;
+    } else {
+      IE2 &= ~UCA0TXIE;
+      a = 0;
+    }
+  __enable_interrupt();
+  }
+  // USCI BO I2C interrupt (not in use here) */
 }

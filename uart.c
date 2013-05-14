@@ -85,15 +85,23 @@ interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
 interrupt(USCIAB0TX_VECTOR) USCI0TX_ISR(void)
 {  
   P1OUT ^= BIT6;
-  __disable_interrupt();
   if (IFG2 & UCA0TXIFG) {
-    UCA0TXBUF = tx.data[a];
-    if (a < 31) {
-      a++;
-    } else {
+    __disable_interrupt();
+    // check fifo level
+    if (tx.size == 0) {
+      // empty fifo: stop tx interrupt
       IE2 &= ~UCA0TXIE;
-      a = 0;
+    } else {
+      // read current value
+      UCA0TXBUF = tx.data[_fifo->raddr];
+      tx.size--;
+      // set read pointer
+      if (tx.raddr < (FIFO_BUFFER_SIZE - 1))
+        tx.raddr++;
+      else
+        tx. raddr = 0;
     }
+  }  
   __enable_interrupt();
   }
   // USCI BO I2C interrupt (not in use here) */

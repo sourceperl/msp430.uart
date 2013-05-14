@@ -10,22 +10,16 @@
 #include <legacymsp430.h>
 #include <stdio.h>
 #include "uart.h"
-
-// some prototypes
-unsigned long millis(void);
-
-// some vars
-unsigned long _millis = 0;
+#include "millis.h"
 
 /*
  * main routines
  */
 int main(void)
 {
-  // set watchdog timer interval to 32ms, enable interrupt
-  WDTCTL  = WDT_MDLY_32;
-  IE1    |= WDTIE;
-  // init internal digitally controlled oscillator
+  // init watchdog for millis()
+  wdt_init();
+  // init internal digitally controlled oscillator DCO
   BCSCTL1 = CALBC1_1MHZ;
   DCOCTL  = CALDCO_1MHZ;
   // IO setup (launchpad : bit 0 -> red led, bit 6 -> green led)
@@ -33,32 +27,19 @@ int main(void)
   P1OUT   &= ~(BIT0 | BIT6);
   // UART init
   uart_init();
-
-  __bis_SR_register(GIE);
-  // hello msg
-  printf("system start\n\r");
-
-  // go to lowpower mode 0 with interrupt enable
-  __bis_SR_register(LPM0_bits | GIE);
-
-  return 0;
-}
-
-/*
- * Watchdog (in timer mode) interrupt routine
- * use to emulate Arduino millis()
- */
-interrupt(WDT_VECTOR) wd_timer_isr(void) {
-  _millis += 32;
-}
-
-/*
- * Safe millis access
- */
-unsigned long millis(void) {
-  unsigned long safe_millis;
-  __disable_interrupt();
-  safe_millis = _millis;
+  // start interrupt
   __enable_interrupt();
-  return safe_millis;
+
+  // hello msg
+  printf("\n\rsystem start\n\r");
+
+  // program loop
+  while(1) {
+    // go to lowpower mode 0 with interrupt enable
+    __bis_SR_register(LPM0_bits | GIE);
+    // wake up !
+    printf("wake up time: %lu\n\r", millis());
+    uart_wait_tx();
+    printf("ready time: %lu\n\r", millis());
+  }
 }

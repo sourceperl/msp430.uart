@@ -11,7 +11,7 @@ void uart_init(void);
  *
  * @return	character received 
  */
-unsigned char uart_getc();
+unsigned char uart_getc(void);
 
 /*
  * write one chracter to the UART blocking.
@@ -20,11 +20,6 @@ unsigned char uart_getc();
  */
 void uart_putc(unsigned char c);
 
-/*
- * write string to the UART blocking.
- *
- * @param[in]	*str	the 0 terminated string to write
- */
-void uart_puts(const char *str);
+void uart_wait_tx(void);
 
 #endif

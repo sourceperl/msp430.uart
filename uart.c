@@ -49,34 +49,46 @@ void uart_putc(unsigned char c)
 {
   // add char in fifo
   fifo_putchar(&tx, c);
-  IE2      |= UCA0TXIE;
+  // start send (set tx interrupt on)
+  IE2 |= UCA0TXIE;
+  
+  /* TO REMOVE */
   // buzy wait until Tx buffer empty
   //while (!(IFG2 & UCA0TXIFG));
   //UCA0TXBUF = c;
 }
 
-void uart_puts(const char *str)
+// wait tx buffer is clean
+void uart_wait_tx(void)
 {
-  while(*str) uart_putc(*str++);
+  while(tx.size != 0);
 }
+
+/*** tx/rx ISR area ***/
+
+/* NOTICE: call subroutines on interrupt can do some stack problem so a large
+part of fifo management code is include here and in fifo.c get/put functions. */
 
 // interrupt service routine : Rx UART/I2C
 interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
-{
-  P1OUT ^= BIT0;
+{  
   // USCI A0 UART interrupt
   if (UC0IFG & UCA0RXIFG) {
-    char c;
-    if (UCA0RXBUF == '\r') {
-      // parse code
-      printf("cmd ");
-      while ((c = fifo_getchar(&rx)) != EOF) 
-        printf("%c", c);
-      printf("\n\r");
-    } else {
-      // store char in FIFO
-      fifo_putchar(&rx, UCA0RXBUF);
+    __disable_interrupt();
+    char c = UCA0RXBUF;
+    // store char in FIFO
+    if (rx.size < FIFO_BUFFER_SIZE) {
+      rx.data[rx.waddr] = c;
+      rx.size++;
+      if (rx.waddr < (FIFO_BUFFER_SIZE + 1))
+        rx.waddr++;
+      else
+        rx.waddr =0;
     }
+    // wake up special char
+    if (c == '\r') 
+      __bic_SR_register_on_exit(LPM0_bits);
+    __enable_interrupt();
   }
   // USCI BO I2C interrupt (not in use here)
 }
@@ -84,7 +96,7 @@ interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
 // interrupt service routine : Tx UART/I2C
 interrupt(USCIAB0TX_VECTOR) USCI0TX_ISR(void)
 {  
-  P1OUT ^= BIT6;
+  // USCI A0 UART interrupt
   if (IFG2 & UCA0TXIFG) {
     __disable_interrupt();
     // check fifo level
@@ -93,16 +105,15 @@ interrupt(USCIAB0TX_VECTOR) USCI0TX_ISR(void)
       IE2 &= ~UCA0TXIE;
     } else {
       // read current value
-      UCA0TXBUF = tx.data[_fifo->raddr];
+      UCA0TXBUF = tx.data[tx.raddr];
       tx.size--;
       // set read pointer
       if (tx.raddr < (FIFO_BUFFER_SIZE - 1))
         tx.raddr++;
       else
-        tx. raddr = 0;
+        tx.raddr = 0;
     }
+    __enable_interrupt();
   }  
-  __enable_interrupt();
-  }
-  // USCI BO I2C interrupt (not in use here) */
+  // USCI BO I2C interrupt (not in use here)
 }

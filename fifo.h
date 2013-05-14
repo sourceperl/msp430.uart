@@ -13,9 +13,9 @@ typedef struct
 } fifo;
 
 // FIFO access routines
-void fifo_init(fifo *_fifo);
-int fifo_getchar(fifo *_fifo); 
-int fifo_putchar(fifo *_fifo, int c);
+         void fifo_init(fifo *_fifo);
+          int fifo_getc(fifo *_fifo); 
+          int fifo_putc(fifo *_fifo, int c);
 unsigned char fifo_size(fifo *_fifo);
 
 #endif 

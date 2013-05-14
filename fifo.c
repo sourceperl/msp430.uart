@@ -41,7 +41,7 @@ void fifo_init(fifo *_fifo)
  *
  * @return	current character or EOF if FIFO empty
  */
-int fifo_getchar(fifo *_fifo)
+int fifo_getc(fifo *_fifo)
 {
   unsigned char c;
   __disable_interrupt();
@@ -69,7 +69,7 @@ int fifo_getchar(fifo *_fifo)
  *
  * @return	1 if write ok or EOF if FIFO full
  */
-int fifo_putchar(fifo *_fifo, int c)
+int fifo_putc(fifo *_fifo, int c)
 {
   __disable_interrupt();
   // check fifo level

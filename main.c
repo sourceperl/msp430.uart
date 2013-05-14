@@ -10,6 +10,7 @@
 #include <legacymsp430.h>
 #include <stdio.h>
 #include "uart.h"
+#include "fifo.h"
 #include "millis.h"
 
 /*
@@ -23,8 +24,8 @@ int main(void)
   BCSCTL1 = CALBC1_1MHZ;
   DCOCTL  = CALDCO_1MHZ;
   // IO setup (launchpad : bit 0 -> red led, bit 6 -> green led)
-  P1DIR   = BIT0 | BIT6;
-  P1OUT   &= ~(BIT0 | BIT6);
+  P1DIR  |= BIT0 | BIT6;
+  P1OUT  &= ~(BIT0 | BIT6);
   // UART init
   uart_init();
   // start interrupt
@@ -35,11 +36,17 @@ int main(void)
 
   // program loop
   while(1) {
-    // go to lowpower mode 0 with interrupt enable
-    __bis_SR_register(LPM0_bits | GIE);
+    // go to lowpower mode 1 with interrupt enable
+    __bis_SR_register(LPM1_bits | GIE);
     // wake up !
     printf("wake up time: %lu\n\r", millis());
-    uart_wait_tx();
-    printf("ready time: %lu\n\r", millis());
+    char c;
+    while((c = uart_getc()) != EOF) {
+      if (c == '1')
+        P1OUT ^= BIT0;
+      if (c == '2')
+        P1OUT ^= BIT6;
+      printf("%c", c);
+    }
   }
 }

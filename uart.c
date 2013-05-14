@@ -40,28 +40,21 @@ void uart_init(void)
 
 unsigned char uart_getc()
 {
-  // buzy wait until RX buffer empty
-  while (!(IFG2 & UCA0RXIFG));
-  return UCA0RXBUF;
+  return fifo_getc(&rx);
 }
 
 void uart_putc(unsigned char c)
 {
   // add char in fifo
-  fifo_putchar(&tx, c);
+  fifo_putc(&tx, c);
   // start send (set tx interrupt on)
   IE2 |= UCA0TXIE;
-  
-  /* TO REMOVE */
-  // buzy wait until Tx buffer empty
-  //while (!(IFG2 & UCA0TXIFG));
-  //UCA0TXBUF = c;
 }
 
 // wait tx buffer is clean
 void uart_wait_tx(void)
 {
-  while(tx.size != 0);
+  while(fifo_size(&tx) != 0);
 }
 
 /*** tx/rx ISR area ***/
@@ -80,7 +73,7 @@ interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
     if (rx.size < FIFO_BUFFER_SIZE) {
       rx.data[rx.waddr] = c;
       rx.size++;
-      if (rx.waddr < (FIFO_BUFFER_SIZE + 1))
+      if (rx.waddr < (FIFO_BUFFER_SIZE - 1))
         rx.waddr++;
       else
         rx.waddr =0;

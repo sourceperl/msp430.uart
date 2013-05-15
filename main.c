@@ -12,6 +12,15 @@
 #include "uart.h"
 #include "fifo.h"
 #include "millis.h"
+#include "job.h"
+
+// prototypes
+void red_led_blink(void); 
+void green_led_blink(void);
+
+// some global vars
+job job1;
+job job2;
 
 /*
  * main routines
@@ -28,6 +37,9 @@ int main(void)
   P1OUT  &= ~(BIT0 | BIT6);
   // UART init
   uart_init();
+  // init job
+  job_init(&job1,   100, red_led_blink);
+  job_init(&job2, 10000, green_led_blink);
   // start interrupt
   __enable_interrupt();
 
@@ -36,6 +48,9 @@ int main(void)
 
   // program loop
   while(1) {
+    job_update(&job1);
+    job_update(&job2);
+    /*
     // go to lowpower mode 1 with interrupt enable
     __bis_SR_register(LPM1_bits | GIE);
     // wake up !
@@ -51,5 +66,15 @@ int main(void)
     }
     uart_wait_tx();
     printf("\n\r");
+    */
   }
+}
+
+void red_led_blink(void) {
+  P1OUT ^= BIT0;
+}
+
+void green_led_blink(void) {
+  P1OUT ^= BIT6;
+  printf("wake up time: %lu\n\r", millis());
 }

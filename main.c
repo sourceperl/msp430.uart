@@ -6,7 +6,7 @@
   MSP430G2553 at 1 MHz
 */
 
-#include <msp430g2553.h>
+#include <msp430.h>
 #include <legacymsp430.h>
 #include <stdio.h>
 #include "uart.h"

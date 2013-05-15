@@ -40,6 +40,7 @@ int main(void)
     __bis_SR_register(LPM1_bits | GIE);
     // wake up !
     printf("wake up time: %lu\n\r", millis());
+    uart_wait_tx();
     char c;
     while((c = uart_getc()) != EOF) {
       if (c == '1')
@@ -48,5 +49,7 @@ int main(void)
         P1OUT ^= BIT6;
       printf("%c", c);
     }
+    uart_wait_tx();
+    printf("\n\r");
   }
 }

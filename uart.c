@@ -78,9 +78,6 @@ interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
       else
         rx.waddr =0;
     }
-    // wake up special char
-    if (c == '\r') 
-      __bic_SR_register_on_exit(LPM0_bits);
     __enable_interrupt();
   }
   // USCI BO I2C interrupt (not in use here)

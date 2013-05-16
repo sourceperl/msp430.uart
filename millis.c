@@ -30,4 +30,6 @@ unsigned long millis(void)
  */
 interrupt(WDT_VECTOR) wd_timer_isr(void) {
   _millis += 32;
+  // wake up processor for job handling
+  __bic_SR_register_on_exit(LPM0_bits);
 }

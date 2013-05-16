@@ -35,9 +35,9 @@ void job_init(job *_job, unsigned long every_ms, void (*job_ptr) (void))
  */
 void job_update(job *_job)
 {
-  // TODO check potential millis rollover bug (ulong)
-  if ((millis() - _job->run_last) > _job->run_every) {
-    _job->run_last = millis();
+  unsigned long now = millis();
+  if ((now - _job->run_last) >= _job->run_every) {
+    _job->run_last = now;
     if(_job->job_ptr != 0L)
       (_job->job_ptr)();
   }

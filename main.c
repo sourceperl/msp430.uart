@@ -13,10 +13,12 @@
 #include "fifo.h"
 #include "millis.h"
 #include "job.h"
+#include "nmea.h"
 
 // prototypes
 void red_led_blink(void); 
 void green_led_blink(void);
+void nmea_rx_gprmc(gprmc *_gprmc);
 void start_adc(void);
 void adc_measure(unsigned int chan, unsigned int ref);
 
@@ -27,6 +29,7 @@ job job3;
 
 unsigned int  adc_value = 0;
 unsigned char adc_ok    = 0;
+char c;
 
 /*
  * main routines
@@ -47,6 +50,8 @@ int main(void)
   job_init(&job1,   100, red_led_blink);
   job_init(&job2, 10000, green_led_blink);
   job_init(&job3,  2000, start_adc);
+  // init nmea callback
+  //nmea_set_gprmc_cb(nmea_rx_gprmc);
   // start interrupt
   __enable_interrupt();
 
@@ -56,31 +61,22 @@ int main(void)
   // program loop
   while(1) {
     // go to lowpower mode 0
-    __bis_SR_register(LPM0_bits);
+    //__bis_SR_register(LPM0_bits);
     // wake up from lowpower
     // job schedule
     job_update(&job1);
     job_update(&job2);
-    job_update(&job3);
+    //job_update(&job3);
     // manage adc result
     if (adc_ok == 1) {
       adc_ok = 0;
       int temp_c = ((0.00146*adc_value)-0.986)/0.00355;
       printf("(%lu) ADC=%d\n\r", millis(), temp_c);
     }
-/*  
-    uart_wait_tx();
-    char c;
+    // nmea parsing
     while((c = uart_getc()) != EOF) {
-      if (c == '1')
-        P1OUT ^= BIT0;
-      if (c == '2')
-        P1OUT ^= BIT6;
-      printf("%c", c);
+      nmea_parse(c);
     }
-    uart_wait_tx();
-    printf("\n\r");
-*/
   }
 }
 
@@ -92,6 +88,11 @@ void red_led_blink(void)
 void green_led_blink(void) 
 {
   P1OUT ^= BIT6;
+}
+
+void nmea_rx_gprmc(gprmc *_gprmc)
+{
+  printf("gprmc is call\n\r");
 }
 
 void start_adc(void) {

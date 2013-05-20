@@ -20,6 +20,9 @@ unsigned char uart_getc(void);
  */
 void uart_putc(unsigned char c);
 
+/*
+ * wait tx buffer is clean (= tx fifo empty)
+ */
 void uart_wait_tx(void);
 
 #endif

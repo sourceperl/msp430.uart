@@ -18,8 +18,8 @@
 // prototypes
 void red_led_blink(void); 
 void green_led_blink(void);
-void nmea_rx_gprmc(gprmc *_gprmc);
-void start_adc(void);
+void rx_handler_gprmc(gprmc *_gprmc);
+void adc_start(void);
 void adc_measure(unsigned int chan, unsigned int ref);
 
 // some global vars
@@ -49,9 +49,9 @@ int main(void)
   // init job
   job_init(&job1,   100, red_led_blink);
   job_init(&job2, 10000, green_led_blink);
-  job_init(&job3,  2000, start_adc);
+  job_init(&job3,  2000, adc_start);
   // init nmea callback
-  //nmea_set_gprmc_cb(nmea_rx_gprmc);
+  nmea_set_gprmc_cb(rx_handler_gprmc);
   // start interrupt
   __enable_interrupt();
 
@@ -90,12 +90,12 @@ void green_led_blink(void)
   P1OUT ^= BIT6;
 }
 
-void nmea_rx_gprmc(gprmc *_gprmc)
+void rx_handler_gprmc(gprmc *_gprmc)
 {
   printf("gprmc is call\n\r");
 }
 
-void start_adc(void) {
+void adc_start(void) {
   adc_measure(INCH_10, 0);
 }
 

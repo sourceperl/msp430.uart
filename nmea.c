@@ -39,8 +39,8 @@ void nmea_parse(char c) {
         switch(nmea_type) {
           case NMEA_TYPE_GPRMC:
             // call gprmc callback
-            //if(nmea_rx_gprmc != 0L)
-            //  (nmea_rx_gprmc)(&_gprmc);
+            if(nmea_rx_gprmc != 0L)
+              (nmea_rx_gprmc)(&_gprmc);
           break;
         }
       }

@@ -1,6 +1,6 @@
 TARGET := main.elf
 CC     := msp430-gcc
-CFLAGS := -Os -Wall -mmcu=msp430g2553
+CFLAGS := -Os -Wall -mmcu=msp430g2553 -mdisable-watchdog
 OBJS   += main.o uart.o fifo.o millis.o job.o nmea.o
 
 $(TARGET): $(OBJS)

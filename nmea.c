@@ -15,6 +15,7 @@ unsigned char nmea_xor;
 unsigned char nmea_xor_char;
 unsigned char nmea_xor_ok;
 unsigned char nmea_type;
+// TODO convert nmea_buf to c string
 char nmea_buf[NMEA_BUF_SIZE];
 unsigned char nmea_field;
 unsigned char nmea_f_pos;

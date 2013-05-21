@@ -3,14 +3,14 @@
 
 typedef struct 
 {
-  volatile long latitude;
-  volatile long longitude;
-  volatile unsigned char utc_h;
-  volatile unsigned char utc_m;
-  volatile unsigned char utc_s;
-  volatile unsigned char day;
-  volatile unsigned char month;
-  volatile unsigned char year;
+  long latitude;
+  long longitude;
+  unsigned char utc_h;
+  unsigned char utc_m;
+  unsigned char utc_s;
+  unsigned char day;
+  unsigned char month;
+  unsigned char year;
 } gprmc;
 
 void nmea_parse(char c);

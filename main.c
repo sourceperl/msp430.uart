@@ -85,6 +85,8 @@ void rx_handler_gprmc(gprmc *_gprmc)
 {
   if (_gprmc->status) {
     printf("*** GPRMC ***\n\r");
+    printf("lat:%08ld\n\r",  _gprmc->lat);
+    printf("lon:%08ld\n\r",  _gprmc->lon);
     printf("h:%02d\n\r",     _gprmc->utc_h);
     printf("m:%02d\n\r",     _gprmc->utc_m);
     printf("s:%02d\n\r",     _gprmc->utc_s);

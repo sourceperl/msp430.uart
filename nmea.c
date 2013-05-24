@@ -63,29 +63,35 @@ void nmea_parse(char c) {
             case 2:
               _gprmc.status = (nmea_buf[0] == 'A');
             break;
-            // latitude
+            // latitude (format ddmm.mmmm)
             case 3:
-              //printf("%c\n\r", nmea_buf[0]);
+               _gprmc.lat = (nmea_atoi_n(nmea_buf, 0, 1) * 1000000L)        //dd
+                          + (nmea_atoi_n(nmea_buf, 2, 3) * 1000000L/60)     //mm
+                          + (nmea_atoi_n(nmea_buf, 5, 8) *  100000L/60000); //.mmmm
             break;
-            // N=north, S=south
+            // N=north (+degree), S=south (-degree)
             case 4:
-              //printf("%c\n\r", nmea_buf[0]);
+              if (nmea_buf[0] == 'S')
+                _gprmc.lat = - _gprmc.lat;
             break;
-            // longitude
+            // longitude (format dddmm.mmmm)
             case 5:
-              //printf("%c\n\r", nmea_buf[0]);
+               _gprmc.lon = (nmea_atoi_n(nmea_buf, 0, 2) * 1000000L)        //ddd
+                          + (nmea_atoi_n(nmea_buf, 3, 4) * 1000000L/60)     //mm
+                          + (nmea_atoi_n(nmea_buf, 6, 9) *  100000L/60000); //.mmmm
             break;
             // E=east, W=west
             case 6:
-              //printf("%c\n\r", nmea_buf[0]);
+              if (nmea_buf[0] == 'W')
+                _gprmc.lon = - _gprmc.lon;
             break;
             // Speed over ground (in knots)
             case 7:
-              //printf("%c\n\r", nmea_buf[0]);
+              /***/
             break;
             // Course over ground
             case 8:
-              //printf("%c\n\r", nmea_buf[0]);
+              /***/
             break;
             // date (format ddmmyy)
             case 9:

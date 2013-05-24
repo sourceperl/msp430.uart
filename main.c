@@ -17,7 +17,6 @@
 
 // prototypes
 void red_led_blink(void); 
-void green_led_blink(void);
 void rx_handler_gprmc(gprmc *_gprmc);
 void adc_start(void);
 void adc_measure(unsigned int chan, unsigned int ref);
@@ -25,7 +24,6 @@ void adc_measure(unsigned int chan, unsigned int ref);
 // some global vars
 job job1;
 job job2;
-job job3;
 
 unsigned int  adc_value = 0;
 unsigned char adc_ok    = 0;
@@ -48,8 +46,7 @@ int main(void)
   uart_init();
   // init job
   job_init(&job1,   100, red_led_blink);
-  job_init(&job2, 10000, green_led_blink);
-  job_init(&job3,  2000, adc_start);
+  job_init(&job2,  2000, adc_start);
   // init nmea callback
   nmea_set_gprmc_cb(rx_handler_gprmc);
   // start interrupt
@@ -65,8 +62,7 @@ int main(void)
     // wake up from lowpower
     // job schedule
     job_update(&job1);
-    job_update(&job2);
-    //job_update(&job3);
+    //job_update(&job2);
     // manage adc result
     if (adc_ok == 1) {
       adc_ok = 0;
@@ -85,14 +81,24 @@ void red_led_blink(void)
   P1OUT ^= BIT0;
 }
 
-void green_led_blink(void) 
-{
-  P1OUT ^= BIT6;
-}
-
 void rx_handler_gprmc(gprmc *_gprmc)
 {
-  printf("gprmc is call\n\r");
+  if (_gprmc->status) {
+    printf("*** GPRMC ***\n\r");
+    printf("h:%02d\n\r",     _gprmc->utc_h);
+    printf("m:%02d\n\r",     _gprmc->utc_m);
+    printf("s:%02d\n\r",     _gprmc->utc_s);
+    printf("day:%02d\n\r",   _gprmc->date_d);
+    printf("month:%02d\n\r", _gprmc->date_m);
+    printf("year:%02d\n\r",  _gprmc->date_y);
+    printf("*************\n\r");
+    // green led on
+    P1OUT |= BIT6;
+  } else {
+    printf("GPS out of sync\n\r");
+    // green led off
+    P1OUT &= ~BIT6;
+  }
 }
 
 void adc_start(void) {

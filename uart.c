@@ -45,8 +45,8 @@ unsigned char uart_getc()
 
 void uart_putc(unsigned char c)
 {
-  // add char in fifo
-  fifo_putc(&tx, c);
+  // add char in fifo, wait if tx fifo is full
+  while (fifo_putc(&tx, c) == EOF);
   // start send (set tx interrupt on)
   IE2 |= UCA0TXIE;
 }

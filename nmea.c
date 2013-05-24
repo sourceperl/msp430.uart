@@ -53,14 +53,15 @@ void nmea_parse(char c) {
         // decode GPRMC frame
         if (nmea_type == NMEA_TYPE_GPRMC) {
           switch(nmea_field) {
-            // UTC Time
+            // UTC Time (format hhmmss.ssss)
             case 1:
-              _gprmc.utc_h = 12;
-              printf("%s\n\r", nmea_buf);
+              _gprmc.utc_h = nmea_atoi_n(nmea_buf, 0, 1);
+              _gprmc.utc_m = nmea_atoi_n(nmea_buf, 2, 3);
+              _gprmc.utc_s = nmea_atoi_n(nmea_buf, 4, 5);
             break;
             // status (A=valid, V=no valid)
             case 2:
-              //printf("%c\n\r", nmea_buf[0]);
+              _gprmc.status = (nmea_buf[0] == 'A');
             break;
             // latitude
             case 3:
@@ -86,9 +87,11 @@ void nmea_parse(char c) {
             case 8:
               //printf("%c\n\r", nmea_buf[0]);
             break;
-            // Date
+            // date (format ddmmyy)
             case 9:
-              printf("%s\n\r", nmea_buf);
+              _gprmc.date_d = nmea_atoi_n(nmea_buf, 0, 1);
+              _gprmc.date_m = nmea_atoi_n(nmea_buf, 2, 3);
+              _gprmc.date_y = nmea_atoi_n(nmea_buf, 4, 5);
             break;
           }
         } 
@@ -112,4 +115,17 @@ void nmea_parse(char c) {
 void nmea_set_gprmc_cb(void (*_nmea_rx_gprmc)(gprmc *))
 {
   nmea_rx_gprmc = _nmea_rx_gprmc;
+}
+
+int nmea_atoi_n(char *instr, unsigned char nstart, unsigned char nstop)
+{
+    int retval = 0;
+    int ncount = 0;
+
+    for (; *instr; instr++) {
+      if ((ncount >= nstart) & (ncount <= nstop))  
+        retval = (10 * retval) + (*instr - '0');
+      ncount++;
+    }
+    return retval;
 }

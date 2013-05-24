@@ -14,27 +14,23 @@
 unsigned char nmea_xor;
 unsigned char nmea_xor_char;
 unsigned char nmea_xor_ok;
-unsigned char nmea_type;
-// TODO convert nmea_buf to c string
-char nmea_buf[NMEA_BUF_SIZE];
-unsigned char nmea_field;
-unsigned char nmea_f_pos;
-unsigned char i;
+unsigned char nmea_type      = NMEA_TYPE_NONE;
+char nmea_buf[NMEA_BUF_SIZE] = "";
+unsigned char nmea_field     = 0;
 gprmc _gprmc;
 void (*nmea_rx_gprmc)(gprmc *);
 
 void nmea_parse(char c) {
   switch(c) {
     case '$':
-      nmea_type = NMEA_TYPE_NONE;
+      nmea_type       = NMEA_TYPE_NONE;
       nmea_field      = 0;
-      nmea_f_pos      = 0;
       nmea_xor        = 0;
       nmea_xor_char   = 1;
+      strcpy(nmea_buf, "");
       return;
     case '\r':
       // nmea xor checksum test
-      nmea_buf[2] = '\0';
       // checksum ok : call callback function for each frame type
       if (strtol(nmea_buf, NULL, 16) == nmea_xor) {
         switch(nmea_type) {
@@ -51,7 +47,7 @@ void nmea_parse(char c) {
     case ',':
       // new field, check it
       if (nmea_field == 0) {
-        if (strncmp(nmea_buf, "GPRMC", nmea_f_pos) == 0)
+        if (strcmp(nmea_buf, "GPRMC") == 0)
           nmea_type = NMEA_TYPE_GPRMC;
       } else {  
         // decode GPRMC frame
@@ -60,9 +56,7 @@ void nmea_parse(char c) {
             // UTC Time
             case 1:
               _gprmc.utc_h = 12;
-              for (i=0; i < nmea_f_pos; i++) 
-                printf("%c", nmea_buf[i]);
-              printf("\n\r");
+              printf("%s\n\r", nmea_buf);
             break;
             // status (A=valid, V=no valid)
             case 2:
@@ -94,23 +88,21 @@ void nmea_parse(char c) {
             break;
             // Date
             case 9:
-              for (i=0; i < nmea_f_pos; i++) 
-                printf("%c", nmea_buf[i]);
-              printf("\n\r");
+              printf("%s\n\r", nmea_buf);
             break;
           }
         } 
       }
       nmea_field++;
-      nmea_f_pos = 0;
+      strcpy(nmea_buf, "");
       // compute xor checksum
       if (nmea_xor_char)
         nmea_xor ^= c;
       return;
     default:  
       // add char to buffer, check overflow
-      if (nmea_f_pos < sizeof(nmea_buf) - 1)
-        nmea_buf[nmea_f_pos++] = c;
+      if (strlen(nmea_buf) < sizeof(nmea_buf) - 1) 
+        strncat(nmea_buf, &c, 1);
       // compute xor checksum
       if (nmea_xor_char)
         nmea_xor ^= c;
